@@ -1,0 +1,14 @@
+# The console and the count detectors
+pandas>=2.2
+pyarrow>=15
+numpy
+scipy
+scikit-learn
+fastapi>=0.110
+uvicorn>=0.29
+requests
+# The sequence model (LogBERT). Optional: without these the watch still scores on counts alone.
+torch
+transformers
+# Reading .evtx files directly. Optional: JSON-lines and CSV exports need nothing extra.
+python-evtx

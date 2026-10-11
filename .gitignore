@@ -1,0 +1,8 @@
+# Fetched open data (fetch_data.py brings it back) and the first prototype's outputs
+data/
+# Watches hold an organisation's logs and the analysts' decisions: never in the repository
+workspaces/
+__pycache__/
+*.pyc
+*.log
+.claude/

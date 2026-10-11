@@ -1,0 +1,164 @@
+<title>Behaviour Watch</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an analyst's morning. Pick a day, read the short queue on the left, read one person's
+   day against their own normal on the right; the measured results sit underneath. */
+:root{
+  --bg:#eef1f4; --panel:#fbfcfd; --ink:#16202b; --ink2:#4c5a69; --mute:#7b8896; --rule:#d5dbe2; --sunk:#e6eaee;
+  --accent:#1c5cab; --accent-ink:#fff; --focus:#1c5cab33;
+  --good:#0a7d0a; --warn:#9a6a00; --serious:#b4542c; --crit:#c23030;
+  --good-bg:#e2f3e2; --warn-bg:#fdf0cf; --serious-bg:#fbe6dc; --crit-bg:#f9dfdf;
+  --bar:#2a78d6; --bar2:#9ec5f4;
+  --sans:"IBM Plex Sans","Segoe UI",system-ui,sans-serif; --cond:"IBM Plex Sans Condensed","IBM Plex Sans","Segoe UI",sans-serif; --mono:"IBM Plex Mono",Consolas,ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#10151b; --panel:#182029; --ink:#e8edf2; --ink2:#b3bfcb; --mute:#8593a1; --rule:#2c3743; --sunk:#131a21;
+  --accent:#6da7ec; --accent-ink:#0b1420; --focus:#6da7ec44;
+  --good:#5fd35f; --warn:#fab219; --serious:#ec835a; --crit:#f07070;
+  --good-bg:#16301a; --warn-bg:#3a2f10; --serious-bg:#3a2218; --crit-bg:#3b1c1c;
+  --bar:#3987e5; --bar2:#184f95; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10151b; --panel:#182029; --ink:#e8edf2; --ink2:#b3bfcb; --mute:#8593a1; --rule:#2c3743; --sunk:#131a21;
+  --accent:#6da7ec; --accent-ink:#0b1420; --focus:#6da7ec44;
+  --good:#5fd35f; --warn:#fab219; --serious:#ec835a; --crit:#f07070;
+  --good-bg:#16301a; --warn-bg:#3a2f10; --serious-bg:#3a2218; --crit-bg:#3b1c1c;
+  --bar:#3987e5; --bar2:#184f95; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);margin:0}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:18px 48px;display:flex;flex-direction:column;gap:14px}
+h1{font:600 22px/1.1 var(--cond);margin:0;letter-spacing:.01em}
+h2{font:600 15px/1.2 var(--cond);margin:0;letter-spacing:.02em;text-transform:uppercase;color:var(--ink2)}
+h3{font:600 15px/1.3 var(--sans);margin:0}
+p{margin:0;max-width:68ch}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.mute{color:var(--mute)} .small{font-size:12.5px}
+.top{display:flex;gap:12px;align-items:center;flex-wrap:wrap} .sp{flex:1}
+.tag{font:500 11.5px var(--mono);border:1px solid var(--rule);border-radius:4px;padding:2px 7px;color:var(--ink2);white-space:nowrap}
+button{font:500 13px var(--sans);color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:6px 11px;cursor:pointer}
+button:hover{border-color:var(--accent)} button:focus-visible,input:focus-visible,tr:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
+input[type=range]{accent-color:var(--accent);min-width:0;flex:1 1 180px}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:8px;min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+.kpi{background:var(--panel);padding:12px 14px;min-width:0}
+.kpi b{display:block;font:500 22px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+.kpi span{font-size:12.5px;color:var(--ink2)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:14px;align-items:start}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th{font:500 11.5px var(--sans);text-transform:uppercase;letter-spacing:.05em;color:var(--mute);text-align:left;padding:7px 10px;border-bottom:1px solid var(--rule);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--rule);vertical-align:middle}
+tr:last-child td{border-bottom:0} td.r,th.r{text-align:right}
+#queue tr{cursor:pointer} #queue tr:hover td{background:var(--sunk)} #queue tr.sel td{background:var(--sunk)} #queue tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.risk{display:inline-block;width:64px;height:7px;border-radius:4px;background:var(--sunk);vertical-align:middle;overflow:hidden;margin-right:6px}
+.risk i{display:block;height:100%;background:var(--bar)} tr.al .risk i{background:var(--crit)}
+.pill{display:inline-flex;align-items:center;gap:5px;font:500 11.5px var(--sans);padding:2px 8px;border-radius:99px;white-space:nowrap}
+.pill.crit{background:var(--crit-bg);color:var(--crit)} .pill.warn{background:var(--warn-bg);color:var(--warn)} .pill.good{background:var(--good-bg);color:var(--good)}
+.pad{padding:14px;display:flex;flex-direction:column;gap:12px}
+.pad ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+svg text{font:10.5px var(--mono);fill:var(--mute)}
+.evs{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:3px 10px;align-items:center;font-size:12.5px}
+.evs .s{height:8px;background:var(--sunk);border-radius:0 4px 4px 0;overflow:hidden}.evs .s i{display:block;height:100%;background:var(--bar);border-radius:0 4px 4px 0}
+.evs .hot i{background:var(--crit)}
+.report{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+.hbar{display:grid;grid-template-columns:170px minmax(0,1fr) 60px;gap:8px;align-items:center;font-size:13px}
+.hbar .track{height:14px;background:var(--sunk);border-radius:0 4px 4px 0;overflow:hidden}.hbar .track i{display:block;height:100%;background:var(--bar);border-radius:0 4px 4px 0}
+.note{border-left:3px solid var(--warn);padding:8px 12px;background:var(--warn-bg);border-radius:0 6px 6px 0}
+@media (max-width:900px){.cols,.report{grid-template-columns:minmax(0,1fr)}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.hbar{grid-template-columns:120px minmax(0,1fr) 54px}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div><h1>Behaviour Watch</h1><div class="mute small">User and entity behaviour analytics · CERT insider-threat test data r4.2 · logon and USB logs only</div></div>
+    <span class="sp"></span>
+    <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="truth"> show the red-team answer key</label>
+  </div>
+  <div class="panel top" style="padding:10px 14px">
+    <button id="prev" aria-label="Previous day">◀</button><span class="tag" id="day" style="font-size:13px"></span><button id="next" aria-label="Next day">▶</button>
+    <input type="range" id="slider" min="0" value="0" aria-label="Day">
+    <button id="jump">Next day with an alert</button>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><b id="k-active">0</b><span>people active this day</span></div>
+    <div class="kpi"><b id="k-alerts">0</b><span>above the alert line (top 1% of normal days)</span></div>
+    <div class="kpi"><b id="k-events"></b><span>events scored over 17 months</span></div>
+    <div class="kpi"><b>0.25M</b><span>parameters in the sequence model, trained on a laptop CPU</span></div>
+  </div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="head"><h2>Review queue</h2><span class="small mute">highest risk first; eight a day</span></div>
+      <div class="scroll"><table id="queue"><thead><tr><th>User</th><th>Role</th><th>Risk</th><th>First reason</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="panel pad" id="detail"></div>
+  </div>
+
+  <div class="top" style="margin-top:10px"><h1 style="font-size:18px">Measured on <span id="r-days"></span> days the detectors never trained on</h1></div>
+  <div class="report">
+    <div class="panel pad">
+      <h2>Detectors compared</h2>
+      <p class="small mute">Every detector alerts on days scoring above the 99th percentile of the clean training months. 70 employees act maliciously in this data (322 of 230,000 user-days).</p>
+      <div class="scroll"><table id="t-res"><thead><tr><th>Detector</th><th class="r">ROC-AUC</th><th class="r">Alerts / day</th><th class="r">Insiders found</th><th class="r">On their first bad day</th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="panel pad">
+      <h2>Found, by scenario</h2>
+      <p class="small mute">Combined detector. Scenario 2 is a leaver who browses job sites and copies data; the tell is in web logs this prototype did not load.</p>
+      <div id="b-scen" style="display:flex;flex-direction:column;gap:7px"></div>
+    </div>
+  </div>
+  <div class="note"><b>The data is synthetic, and deliberately so.</b> CERT r4.2 is Carnegie Mellon's simulated organisation of 1,000 employees with scripted insider incidents. It measures whether the method works, not how it will score on a real network. Two of its five log sources were used; web and email logs (16 GB) would be the next addition.</div>
+</div>
+
+<script>
+const D = /*DATA*/null;
+const $ = id => document.getElementById(id);
+let di = 0, sel = null;
+const SCEN = {1: 'after-hours logon, USB, upload', 2: 'job hunting, then USB copying', 3: 'admin logs on as supervisor'};
+const fmtDay = s => new Date(s + 'T00:00:00Z').toLocaleDateString('en-GB', {weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'});
+
+function spark(u) {
+  const v = D.line[u] || [], W = 520, H = 92, x = i => 28 + i * (W - 40) / (D.days.length - 1), y = r => 8 + (100 - r) * (H - 26) / 100;
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Risk for ${u} over ${D.days.length} days"><line x1="28" x2="${W - 12}" y1="${y(D.threshold)}" y2="${y(D.threshold)}" stroke="var(--crit)" stroke-dasharray="3 3" stroke-width="1"/><text x="${W - 12}" y="${y(D.threshold) - 3}" text-anchor="end">alert line</text><line x1="28" x2="${W - 12}" y1="${y(0)}" y2="${y(0)}" stroke="var(--rule)"/><text x="24" y="${y(0) + 3}" text-anchor="end">0</text><text x="24" y="${y(100) + 6}" text-anchor="end">100</text>`;
+  let path = '', pen = false;
+  v.forEach((r, i) => { if (r == null) { pen = false; return; } path += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(r).toFixed(1); pen = true; });
+  s += `<path d="${path}" fill="none" stroke="var(--bar)" stroke-width="2" stroke-linejoin="round"/>`;
+  v.forEach((r, i) => { if (r != null) s += `<circle cx="${x(i)}" cy="${y(r)}" r="${i === di ? 4.5 : 2}" fill="${r > D.threshold ? 'var(--crit)' : 'var(--bar)'}" stroke="var(--panel)" stroke-width="${i === di ? 2 : 0}"><title>${D.days[i]}: risk ${r}</title></circle>`; });
+  return s + `<text x="28" y="${H - 2}">${D.days[0].slice(5)}</text><text x="${W - 12}" y="${H - 2}" text-anchor="end">${D.days[D.days.length - 1].slice(5)}</text></svg>`;
+}
+function detail(r) {
+  if (!r) { $('detail').innerHTML = '<span class="mute">Nobody was active on this day.</span>'; return; }
+  const truth = $('truth').checked ? (r.mal ? `<span class="pill crit">■ red-team activity · scenario ${r.scen}: ${SCEN[r.scen] || ''}</span>` : `<span class="pill good">✓ not red-team activity</span>`) : '';
+  const mx = Math.max(1, ...r.ev.map(e => e[3]));
+  $('detail').innerHTML = `<div class="top"><div><h3 class="num">${r.u}</h3><div class="small mute">${r.role}${r.dept ? ' · ' + r.dept : ''}</div></div><span class="sp"></span>${r.risk > D.threshold ? '<span class="pill crit">■ above the alert line</span>' : '<span class="pill warn">● below the alert line</span>'} ${truth}</div>
+    <div><div class="small mute">Risk over these ${D.days.length} days (100 = more unusual than every normal day in training)</div>${spark(r.u)}</div>
+    <div><div class="small mute" style="margin-bottom:4px">Why this day stands out</div><ul>${r.why.map(w => `<li>${w}</li>`).join('')}</ul></div>
+    <div class="scroll"><table><thead><tr><th>Today against their normal</th><th class="r">Today</th><th class="r">Their usual</th><th class="r">Same role, today</th></tr></thead><tbody>${r.counts.map(c => `<tr><td>${c[0]}</td><td class="r num">${c[1] > 0 && c[2] != null && c[1] > c[2] * 2 + 1 ? '<b>' + c[1] + '</b>' : c[1]}</td><td class="r num mute">${c[2] == null ? '–' : c[2]}</td><td class="r num mute">${c[3]}</td></tr>`).join('')}</tbody></table></div>
+    <div><div class="small mute" style="margin-bottom:5px">The day's events, with how unexpected each was to the sequence model</div><div class="evs">${r.ev.map(e => `<span class="num">${e[0]}</span><span>${e[1]}</span><span class="s ${e[3] > 4 ? 'hot' : ''}" title="surprise ${e[3]}"><i style="width:${Math.max(2, e[3] / mx * 100)}%"></i></span><span class="mute">${e[2] === 'own' ? 'own PC' : e[2] === 'shared' ? 'shared PC' : 'another’s PC'}</span>`).join('')}</div></div>`;
+}
+function draw() {
+  const day = D.days[di], q = D.queue[day] || [];
+  $('day').textContent = fmtDay(day); $('slider').value = di;
+  $('k-active').textContent = (D.active[day] || 0).toLocaleString('en-US'); $('k-alerts').textContent = D.alerts[day] || 0;
+  if (!q.find(r => r === sel)) sel = q[0] || null;
+  $('queue').tBodies[0].innerHTML = q.map((r, i) => `<tr tabindex="0" data-i="${i}" class="${r === sel ? 'sel' : ''} ${r.risk > D.threshold ? 'al' : ''}"><td class="num">${r.u}${$('truth').checked && r.mal ? ' <span class="pill crit">■</span>' : ''}</td><td class="small">${r.role}</td><td class="num" style="white-space:nowrap"><span class="risk"><i style="width:${Math.max(3, (r.risk - 90) * 10)}%"></i></span>${r.risk.toFixed(1)}</td><td class="small">${r.why[0]}</td></tr>`).join('') || '<tr><td colspan="4" class="mute">Nobody was active on this day.</td></tr>';
+  detail(sel);
+}
+function pickRow(e) { const tr = e.target.closest('tr[data-i]'); if (tr) { sel = D.queue[D.days[di]][+tr.dataset.i]; draw(); } }
+$('queue').addEventListener('click', pickRow); $('queue').addEventListener('keydown', e => { if (e.key === 'Enter') pickRow(e); });
+$('slider').max = D.days.length - 1; $('slider').oninput = e => { di = +e.target.value; sel = null; draw(); };
+$('prev').onclick = () => { di = Math.max(0, di - 1); sel = null; draw(); }; $('next').onclick = () => { di = Math.min(D.days.length - 1, di + 1); sel = null; draw(); };
+$('jump').onclick = () => { for (let k = 1; k <= D.days.length; k++) { const j = (di + k) % D.days.length; if (D.alerts[D.days[j]]) { di = j; sel = null; break; } } draw(); };
+$('truth').onchange = draw;
+
+(function report() {
+  const R = D.results, m = D.meta;
+  $('k-events').textContent = (m.events / 1e6).toFixed(2) + 'M'; $('r-days').textContent = m.test_days;
+  const rows = [['random', 'Random order'], ['iforest', 'Isolation Forest on daily counts'], ['zscore', 'Deviation from own baseline'], ['lb_nll_sum', 'LogBERT sequence model'], ['combined', 'Baseline + LogBERT combined']];
+  $('t-res').tBodies[0].innerHTML = rows.map(([k, n]) => { const r = R[k]; return `<tr><td>${k === 'combined' ? '<b>' + n + '</b>' : n}</td><td class="r num">${r.roc_auc.toFixed(3)}</td><td class="r num">${r.alerts_per_day}</td><td class="r num">${r.insiders_found} / ${r.insiders}</td><td class="r num">${r.found_same_day}</td></tr>`; }).join('');
+  const tot = {1: 30, 2: 30, 3: 10}, f = R.combined.found_by_scenario;
+  $('b-scen').innerHTML = [1, 2, 3].map(s => `<div class="hbar" title="${f[s] || 0} of ${tot[s]} insiders"><span>${s}. ${SCEN[s]}</span><span class="track"><i style="width:${(f[s] || 0) / tot[s] * 100}%"></i></span><span class="num r">${f[s] || 0} / ${tot[s]}</span></div>`).join('');
+})();
+// open on the first day that has a red-team row in the queue, so the page shows a real case at rest
+di = Math.max(0, D.days.findIndex(d => (D.queue[d] || []).some(r => r.mal && r.risk > D.threshold)));
+draw();
+</script>

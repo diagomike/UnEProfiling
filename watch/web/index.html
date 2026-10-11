@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Behaviour Watch</title>
+<link rel="stylesheet" href="/web/watch.css">
+</head>
+<body>
+<header id="top">
+  <span class="brand">Behaviour Watch</span>
+  <span class="mute nowrap" id="wname"></span>
+  <nav id="tabs"></nav>
+  <span class="sp"></span>
+  <label class="check small" id="keybox" hidden title="This watch has an answer key. Turn it on to see which alerts were real."><input type="checkbox" id="key" onchange="setKey(this.checked)">Answer key</label>
+  <button class="ib" title="Keyboard shortcuts (?)" onclick="help()">?</button>
+  <select id="me" title="Who is working here" onchange="setMe(this.value)"></select>
+</header>
+
+<div id="daybar" hidden>
+  <button class="ib" title="Previous day (←)" onclick="stepDay(-1)">‹</button>
+  <input type="date" id="day" onchange="setDay(this.value)">
+  <button class="ib" title="Next day (→)" onclick="stepDay(1)">›</button>
+  <div id="strip" title=""></div>
+  <div class="stats" id="daystats"></div>
+</div>
+
+<main id="v-queue" hidden><div class="split"><div class="list" id="q-list"></div><div class="detail" id="q-detail"></div></div></main>
+<main id="v-people" hidden>
+  <div class="row bar"><input type="text" id="p-q" placeholder="Find a code (or a revealed name)   /" oninput="debounce(loadPeople)" style="max-width:280px">
+    <select id="p-role" onchange="loadPeople()" style="max-width:220px"></select>
+    <select id="p-win" onchange="loadPeople()" style="max-width:150px"><option value="14">Last 14 days</option><option value="30" selected>Last 30 days</option><option value="90">Last 90 days</option></select>
+    <span class="mute small">counted back from the day shown above</span></div>
+  <div class="split"><div class="list" id="p-list"></div><div class="detail" id="p-detail"></div></div>
+</main>
+<main id="v-machines" hidden><div class="split"><div class="list" id="m-list"></div><div class="detail" id="m-detail"></div></div></main>
+<main id="v-cases" hidden><div class="page" id="c-body"></div></main>
+<main id="v-measured" hidden><div class="page" id="e-body"></div></main>
+<main id="v-setup" hidden><div class="page" id="s-body"></div></main>
+
+<div id="menu" hidden></div>
+<div id="tip" hidden></div>
+<div id="toast" hidden></div>
+<script src="/web/watch.js"></script>
+</body>
+</html>
